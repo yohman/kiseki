@@ -1,0 +1,793 @@
+body,html {
+	margin:0;
+	height:100%;
+	width:100%;
+}
+
+.author {
+	font-style: italic;
+	margin-bottom: 10px !important;
+	color: #333;
+}
+h2 {
+	font-size: 1.5em !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+h3 {
+	font-size: 1.4em !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.maplibregl-popup-content p {
+	font-size: 1em !important;
+}
+
+#map {
+	height: 100%;
+}
+
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevent body scrollbars if children are managed */
+}
+
+.header {
+    padding: 10px;
+    background-color: #eee;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0; /* Prevent header from shrinking if content is too large */
+    overflow: hidden; /* Prevent content from visually overflowing the header */
+}
+
+/* Remove the old, potentially problematic rule for the first image */
+/*
+.header img:first-child {
+    margin-right: auto; 
+}
+*/
+
+/* Styling for the logo's link container */
+.header #logo-link {
+    margin-right: auto; /* Pushes the "me.png" image to the right */
+    display: flex;      /* Ensures the image inside is well-contained */
+    align-items: center;
+    flex-shrink: 1;     /* Allow this container to shrink if needed */
+    min-width: 0;       /* Allows shrinking below intrinsic content width */
+}
+
+/* General styling for ALL images within the header */
+.header img {
+    max-height: 60px; /* Default max height, images will scale maintaining aspect ratio */
+    width: auto;      /* Maintain aspect ratio */
+    display: block;   /* Removes extra space that inline display might add */
+    margin-left: 0;   /* Reset margin-left from any previous generic rule */
+    max-width: 100%;  /* Crucial: image won't be wider than its container (the <a> or the flex space) */
+}
+
+/* Specific styling for the "me.png" image (direct child of .header) */
+.header > img {
+    margin-left: 10px; /* Space between the logo container and this image */
+    flex-shrink: 1;    /* Allow this image to shrink if space is tight.
+                           Combined with max-height and width:auto, it will scale down. */
+    /* max-height and max-width are handled by the general .header img rule */
+}
+
+
+.main-area { /* NEW: This container will hold sidebar and content side-by-side */
+    display: flex;
+    flex-direction: row; /* Arrange sidebar and content horizontally */
+    flex: 1; /* Take remaining vertical space from body */
+    overflow: hidden; /* Prevent scrollbars on main-area, children handle their own scroll */
+    position: relative; /* Needed for absolute positioning of hamburger if it's a direct child */
+    min-height: 0; 
+}
+
+.sidebar {
+    width: 200px; /* Increased width to accommodate larger icons + padding */
+    background-color: #f0f0f0; 
+    padding: 15px; /* Adjusted padding */
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    border-right: 1px solid #ddd;
+    flex-shrink: 0; 
+    transition: width 0.2s ease-in-out, padding 0.2s ease-in-out; 
+    box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.sidebar.sidebar-closed {
+    width: 0;
+    padding: 0; /* Remove padding when closed */
+    overflow: hidden; 
+    border-right: none;
+}
+
+/* Styles for the simplified sidebar items */
+.sidebar-item {
+    display: flex;
+    flex-direction: column; /* Stack icon and author vertically */
+    align-items: center; /* Center items horizontally */
+    text-align: center; /* Center text */
+    margin-bottom: 20px; /* Space between items */
+    padding: 15px; /* Padding within the clickable item */
+    background-color: #fff;
+    border-radius: 8px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%; /* Make item take full width of sidebar content area */
+    box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.sidebar-item:hover {
+    background-color: #e9e9e9;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.15);
+}
+
+.sidebar-item-icon-img { /* Styles for the icon in the sidebar item */
+    width: 150px; 
+    height: 150px;
+    border-radius: 50%; /* Circular icon */
+    object-fit: cover;
+    margin-bottom: 10px; /* Space between icon and author name */
+    border: 3px solid #fff; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+}
+
+.sidebar-item-author-name { /* Styles for the author name in the sidebar item */
+    font-size: 0.9em; 
+    color: #333;
+    margin: 0;
+    word-break: break-word; 
+    line-height: 1.4; 
+    font-weight: 600; /* Bolder author name */
+}
+
+
+/* Remove or comment out old conflicting/unused sidebar styles from previous attempts */
+
+.content {
+    flex: 1; /* Takes remaining horizontal space in .main-area */
+    display: flex;
+    flex-direction: column; /* Stack map and timeline vertically */
+    position: relative; /* For potential absolute positioning of children if needed */
+    overflow: hidden; /* Prevent scrollbars on content, map/timeline handle their own */
+}
+
+#hamburger-menu {
+    position: absolute;
+    top: 10px; /* Default top position */
+    left: 10px;
+    z-index: 1002; /* Ensure hamburger is above the new scroller and search */
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Horizontal Card Scroller Styles */
+#horizontal-card-scroller {
+    position: absolute;
+    top: 0; /* Position at the top of the .content area */
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 110px; 
+    background-color: rgba(51, 51, 51, 0.5); 
+    overflow-x: auto;  
+    overflow-y: hidden; 
+    white-space: nowrap; 
+    padding: 7px;     
+    box-sizing: border-box;
+    z-index: 1001; /* Below hamburger, above map and search icon (when search is not active) */
+    -webkit-overflow-scrolling: touch; 
+}
+
+/* Search Feature Styles */
+#search-container {
+    position: absolute;
+    top: 120px; /* Below horizontal scroller */
+    right: 15px;
+    z-index: 1000; /* Default z-index */
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 25px; /* Circular when collapsed */
+    padding: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+    width: 40px; /* Initial width for icon */
+    height: 40px; /* Initial height for icon */
+    overflow: hidden; /* Hide input initially */
+}
+
+#search-container.search-active {
+    width: 250px; /* Expanded width */
+    z-index: 1003; /* Above scroller and hamburger when active */
+    background-color: rgba(255, 255, 255, 1);
+}
+
+#search-icon {
+    cursor: pointer;
+    padding: 3px; /* Small padding around SVG */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+#search-icon svg {
+    fill: #333;
+}
+
+#search-input {
+    border: none;
+    outline: none;
+    padding: 5px 8px;
+    font-size: 1em;
+    width: 0; /* Initially hidden */
+    opacity: 0;
+    transition: width 0.3s ease-in-out 0.1s, opacity 0.2s ease-in-out 0.1s; /* Delay opacity transition */
+    background-color: transparent;
+    margin-left: 5px;
+}
+
+#search-container.search-active #search-input {
+    width: calc(100% - 40px); /* Full width minus icon and padding */
+    opacity: 1;
+}
+
+
+/* Individual card style within the horizontal scroller */
+.horizontal-card {
+    display: inline-flex; /* Use inline-flex for better alignment control */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 70px; /* Width of each card */
+    height: 80px; /* Height of each card, should be less than scroller height minus padding */
+    background-color: rgba(255, 255, 255, 0.5); /* Slightly transparent white cards */
+    border-radius: 6px;
+    margin-right: 10px; /* Space between cards */
+    padding: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    vertical-align: top; /* Align cards to the top if using inline-block/inline-flex */
+}
+
+.horizontal-card:last-child {
+    margin-right: 0; /* No margin for the last card */
+}
+
+.horizontal-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+}
+
+/* Style for the selected card in the horizontal scroller */
+.horizontal-card-selected {
+    background-color: rgba(255, 255, 255, 0.95); /* A light orange/peach color for selection */
+    border: 2px solid #000; /* Dark orange border */
+    box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+    transform: translateY(-2px); /* Slight lift */
+}
+
+.horizontal-card-icon-img {
+    width: 60px; /* Icon size within the horizontal card */
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 6px; /* Space between icon and author */
+}
+
+.horizontal-card-author-name {
+    font-size: 0.75em;
+    color: #333;
+    text-align: center;
+    white-space: normal; /* Allow author name to wrap if too long */
+    word-break: break-word;
+    line-height: 1.2;
+    font-weight: 500;
+    max-height: 2.4em; /* Limit to two lines approx */
+    overflow: hidden;
+	margin: 0px;
+}
+
+
+#map {
+    flex-grow: 1; /* Map takes available vertical space in content */
+    width: 100%;
+    height: 100%; /* Ensure map takes full height of its flex-grow space */
+}
+
+.timeline-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    background-color: rgba(37, 37, 37, 0.9); /* Semi-transparent white */
+    border-top: 1px solid #ddd;
+    /* The following lines position it at the bottom of the map area if map has fixed height or content is relative */
+    /* position: absolute; 
+    bottom: 0;
+    left: 0;
+    right: 0; 
+    z-index: 1000; */
+    /* For now, keep it in normal flow below the map */
+    box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 8px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.timeline-item:hover {
+    background-color: #e9e9e9;
+}
+
+.timeline-circle {
+    width: 28px;
+    height: 28px;
+    background-color: #d0d0d0;
+    border-radius: 50%;
+    border: 2px solid #b0b0b0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.timeline-circle.active {
+    background-color: #3e3e3e; /* A nice blue */
+    border-color: #010101; /* Darker blue for border */
+    box-shadow: 0 0 0 2px white, 0 0 0 1px #e7e7e7; /* Halo effect */
+}
+
+.timeline-label {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #fff;
+    text-align: center;
+    max-width: 50px; /* Prevent very long labels from breaking layout */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* MapLibre popup customization (optional) */
+.maplibregl-popup-content {
+    font-family: sans-serif;
+    padding: 10px !important; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    position: relative; /* Needed for absolute positioning of the icon */
+    padding-top: 35px; /* Make space for the protruding icon (half icon height + some margin) */
+    overflow: visible !important; /* Ensure protruding icon is visible */
+}
+
+/* New styles for the protruding icon */
+.popup-protruding-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    position: absolute;
+    top: -24px; /* Half of height (48px / 2) to make it protrude from the top */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    border: 2px solid white; /* Optional: adds a nice border */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Optional: adds depth */
+    z-index: 10; /* Ensure it's above other popup content */
+}
+
+/* Styles for the text content area within the popup */
+.popup-text-content {
+    text-align: center; /* Center the text content below the icon */
+	margin-top: 25px;
+}
+
+.popup-text-content h3 { /* Replaces .maplibregl-popup-content h3 for specificity if needed */
+    font-size: 1.2em; /* Slightly larger title */
+    margin: 0 0 5px 0;
+    color: #333;
+    font-weight: bold;
+}
+
+/* New style for Genre Pill */
+.popup-genre-pill {
+    display: inline-block;
+    background-color: #e0e0e0; /* Light grey background */
+    color: #555; /* Darker grey text */
+    padding: 3px 8px;
+    border-radius: 12px; /* Pill shape */
+    font-size: 0.75em;
+    margin-bottom: 8px; /* Space below the pill */
+    font-weight: 500;
+    cursor: pointer; /* Add pointer cursor */
+    text-decoration: none; /* Remove default underline if any from other rules */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Smooth transition for hover */
+}
+
+.popup-genre-pill:hover {
+    background-color: #c0c0c0; /* Darker background on hover */
+    color: #333; /* Darker text on hover */
+    text-decoration: underline; /* Underline on hover to indicate link */
+}
+
+.popup-author-detail { /* New class for author in this layout */
+    font-size: 0.85em;
+    color: #555;
+    font-style: italic;
+    margin: 0 0 8px 0;
+}
+
+.popup-text-content p { /* Replaces .maplibregl-popup-content p for specificity */
+    font-size: 0.9em;
+    margin: 0 0 5px 0; /* Adjust spacing for description */
+    color: #444;
+    line-height: 1.4;
+}
+
+/* New style for Hashtag */
+.popup-hashtag {
+    font-size: 0.8em;
+    color: #007bff; /* Blue color for hashtag */
+    margin-top: 10px; /* Space above the hashtag */
+    font-weight: 500;
+    cursor: pointer; /* Add pointer cursor */
+    text-decoration: none; /* Remove default underline if any from other rules */
+    transition: color 0.2s ease; /* Smooth transition for hover */
+}
+
+.popup-hashtag:hover {
+    color: #0056b3; /* Darker blue on hover */
+    text-decoration: underline; /* Underline on hover */
+}
+
+#modal-logo {
+	width: 100%; /* Adjusted size for the logo */
+	height: auto; /* Maintain aspect ratio */
+	margin-bottom: 10px; /* Space below the logo */
+	display: block; /* Ensure it behaves like a block element */
+	
+}
+
+/* Remove or comment out old popup grid styles if they conflict */
+/*
+.popup-content-grid {
+    display: flex;
+    align-items: flex-start; 
+}
+
+.popup-left {
+    flex: 0 0 60px; 
+    margin-right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.popup-icon-img { // This class is now .popup-protruding-icon
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 5px;
+}
+
+.popup-author-name { // This class is now .popup-author-detail
+    font-size: 0.8em;
+    color: #555;
+    text-align: center;
+    margin: 0;
+    word-break: break-word;
+}
+
+.popup-right {
+    flex: 1;
+}
+
+.popup-right h3 {
+    font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.popup-right p {
+    font-size: 0.9em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+*/
+
+.maplibregl-popup-close-button {
+    font-size: 1.5em;
+    padding: 0 5px;
+    color: #777;
+}
+.maplibregl-popup-close-button:hover {
+    background-color: transparent;
+    color: #333;
+}
+/* Welcome Modal Styles */
+#welcome-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.9); /* Dark semi-transparent black overlay */
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 2000; /* Ensure it's on top of everything */
+	opacity: 1;
+	transition: opacity 0.3s ease-in-out;
+}
+
+#welcome-modal-overlay.modal-hidden {
+	opacity: 0;
+	pointer-events: none; /* Disable interaction when hidden */
+}
+
+#welcome-modal-content {
+	background-color: #333; /* Dark background */
+	color: #eee; /* Light text for contrast */
+	padding: 20px; /* Adjusted padding */
+	border-radius: 8px;
+	text-align: center;
+	box-shadow: 0 5px 15px rgba(0,0,0,0.6); /* Darker shadow */
+	max-width: 90vw; /* Use viewport width percentage */
+	width: 400px; /* Max width for larger screens */
+	box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+#welcome-modal-content h1 {
+	font-size: 3em; /* Adjusted font size */
+	color: #fff; /* White title */
+	margin-bottom: 15px;
+	
+}
+
+#modal-qrcode {
+	width: 220px; /* Adjusted size */
+	height: 220px; /* Adjusted size */
+	margin: 10px auto 5px; /* Reduced bottom margin */
+	display: block;
+	filter: invert(100%); /* Invert the colors for dark mode */
+}
+
+#form-link {
+    display: block;
+    margin: 5px auto 15px; /* Spacing around the link */
+    color: #8ab4f8; /* A light blue, common for links in dark themes */
+    text-decoration: underline;
+    font-size: 0.9em;
+}
+
+#form-link:hover {
+    color: #aecbfa; /* Lighter blue on hover */
+}
+
+#mapping-memories-count {
+    font-size: 1.1em;
+    color: #b0b0b0; /* A slightly muted, elegant light gray */
+    margin-top: 15px; /* Space above */
+    margin-bottom: 10px; /* Space below, before the slogan */
+    font-style: italic;
+    opacity: 0; /* Initially hidden, to be faded in by JS or if data loads fast */
+    animation: fadeInEffect 1s ease-in-out forwards;
+    animation-delay: 0.5s; /* Slight delay before fading in */
+}
+
+@keyframes fadeInEffect {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+#welcome-modal-content .slogan {
+	font-size: 1em; /* Adjusted font size */
+	color: #ccc; /* Light gray slogan */
+	margin-bottom: 20px;
+	line-height: 1.5;
+}
+
+#modal-close-button {
+	background-color: #555; /* Dark gray button */
+	color: #eee; /* Light text */
+	border: none;
+	padding: 10px 20px; /* Adjusted padding */
+	font-size: 1em; /* Adjusted font size */
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	width: 80%; /* Make button wider on mobile */
+	max-width: 250px; /* But not too wide on larger modals */
+}
+
+#modal-close-button:hover {
+	background-color: #777; /* Lighter gray on hover */
+}
+
+/* Media Query for smaller screens */
+@media (max-width: 600px) {
+	#welcome-modal-content {
+		padding: 15px;
+		width: 90vw; /* Ensure it fits small screens */
+	}
+
+	#welcome-modal-content h1 {
+		font-size: 1.8em;
+	}
+
+	#modal-qrcode {
+		width: 120px;
+		height: 120px;
+		margin-bottom: 5px; /* Reduced bottom margin */
+	}
+
+    #form-link {
+        margin: 5px auto 10px; /* Adjusted margin for smaller screens */
+        font-size: 0.85em;
+    }
+
+	#welcome-modal-content .slogan {
+		font-size: 0.9em;
+		margin-bottom: 15px;
+	}
+
+	#modal-close-button {
+		padding: 10px 15px;
+		font-size: 0.95em;
+		width: 90%; /* Full width button on small screens */
+	}
+}
+
+/* Media Queries for header image scaling */
+@media (max-width: 768px) {
+    .header {
+        padding: 8px; /* Slightly reduce header padding */
+    }
+    .header img { /* Affects all images in header */
+        max-height: 50px; /* Reduce max height of images */
+    }
+    .header > img { /* Specifically for direct child images like "me.png" */
+        margin-left: 8px; /* Reduce margin */
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 5px; /* Further reduce header padding */
+    }
+    .header img { /* Affects all images in header */
+        max-height: 40px; /* Further reduce max height of images */
+    }
+    .header > img { /* Specifically for direct child images like "me.png" */
+        margin-left: 5px; /* Further reduce margin */
+    }
+}
+
+/* Custom Marker Style - ensure this class name matches what's in your JS */
+/* If your JS uses el.className = 'marker', then this should be .marker */
+/* If your JS uses el.className = 'custom-marker', then this should be .custom-marker */
+
+/* Styles for the marker if you are using el.className = 'marker' */
+.marker {
+    /* width and height are set inline in JS, but good to have here as fallback/reference */
+    /* width: 48px; */ 
+    /* height: 48px; */
+    background-size: cover; /* Or 'contain' */
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%; /* Optional: if you want circular markers */
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3); /* Optional: subtle shadow */
+}
+
+/* If you were using .custom-marker previously, ensure it's updated or the JS class name is changed */
+/*
+.custom-marker {
+    width: 48px;
+    height: 48px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+*/
+
+/* Media Query for smaller screens */
+@media (max-width: 600px) {
+	#welcome-modal-content {
+		padding: 15px;
+		width: 90vw; /* Ensure it fits small screens */
+	}
+
+	#welcome-modal-content h1 {
+		font-size: 1.8em;
+	}
+
+	#modal-qrcode {
+		width: 120px;
+		height: 120px;
+		margin-bottom: 5px; /* Reduced bottom margin */
+	}
+
+    #form-link {
+        margin: 5px auto 10px; /* Adjusted margin for smaller screens */
+        font-size: 0.85em;
+    }
+
+	#welcome-modal-content .slogan {
+		font-size: 0.9em;
+		margin-bottom: 15px;
+	}
+
+	#modal-close-button {
+		padding: 10px 15px;
+		font-size: 0.95em;
+		width: 90%; /* Full width button on small screens */
+	}
+}
+
+/* Media Queries for header image scaling */
+@media (max-width: 768px) {
+    .header {
+        padding: 8px; /* Slightly reduce header padding */
+    }
+    .header img { /* Affects all images in header */
+        max-height: 50px; /* Reduce max height of images */
+    }
+    .header > img { /* Specifically for direct child images like "me.png" */
+        margin-left: 8px; /* Reduce margin */
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 5px; /* Further reduce header padding */
+    }
+    .header img { /* Affects all images in header */
+        max-height: 40px; /* Further reduce max height of images */
+    }
+    .header > img { /* Specifically for direct child images like "me.png" */
+        margin-left: 5px; /* Further reduce margin */
+    }
+}
+
+/* Custom Marker Style */
+.custom-marker {
+    width: 48px;  /* Crucial: Defines the width of your marker */
+    height: 48px; /* Crucial: Defines the height of your marker */
+    background-size: cover; /* Ensures the image covers the element area */
+    background-repeat: no-repeat;
+    background-position: center;
+    /* Optional styles for appearance */
+    border-radius: 50%; /* Makes it circular if desired */
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3); /* Adds a subtle shadow */
+}

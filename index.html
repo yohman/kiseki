@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>The Story of a Japanese High School</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Added for mobile friendliness -->
+
+	<!-- MapLibre GL JS -->
+	<script src='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js'></script>
+	<link href='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css' rel='stylesheet' />
+
+	<!-- jquery -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+	<!-- stylesheets -->
+	<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+	<div id="welcome-modal-overlay">
+		<div id="welcome-modal-content">
+			<!-- <h1>Mapろう！</h1> -->
+			<img src="images/kiseki.png" alt="Mapろう！ Logo" id="modal-logo" width="100%">
+			<img src="images/qrcode.png" alt="QR Code" id="modal-qrcode">
+			<a href="https://docs.google.com/forms/d/e/1FAIpQLSfXPt1yca5nZY26U4hsEinVi0WsFPqheEV-ed_TiX7KtzGp-g/viewform?usp=header" target="_blank" id="form-link">あなたの思い出を載せよう！➡︎</a>
+			<p id="mapping-memories-count"></p> <!-- Added this line -->
+			<p class="slogan">地図と物語で、未知の世界へ飛び込もう！</p>
+			<button id="modal-close-button">冒険を始める！ <br>Begin your journey &rarr;</button>
+		</div>
+	</div>
+
+	<div class="header">
+		<!-- <img src="http://www.shutoku.ac.jp/img/common/header__logo@2x.png" width=> -->
+		<!-- <img src="images/sakura.png" width=> -->
+		<!-- <a href="#" id="logo-link"><img src="images/matsudo-minami.png" width=></a> -->
+		<a href="#" id="logo-link"><img src="images/kiseki.png" width=></a>
+		<img src="images/me.png" width=60> 
+	</div>
+	<div class="main-area"> <!-- NEW WRAPPER for sidebar and content -->
+		<div class="sidebar sidebar-closed"></div> <!-- Added sidebar-closed class -->
+		<div class="content">
+			<div id="hamburger-menu">
+				<span></span>
+				<span></span>
+				<span></span>
+			</div>
+			<div id="horizontal-card-scroller"></div> <!-- New horizontal scroller div -->
+			<!-- Search Feature HTML -->
+			<div id="search-container">
+				<input type="text" id="search-input" placeholder="Search...">
+				<div id="search-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+				</div>
+			</div>
+			<div id="map"></div>
+			<div class="timeline-controls"></div> <!-- Added for timeline controls -->
+
+			<script src="js/map.js"></script>
+		</div> <!-- Closing content div -->
+	</div> <!-- Closing main-area div -->
+
+</body>
+</html>
