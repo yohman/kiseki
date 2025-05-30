@@ -446,20 +446,52 @@ body {
     line-height: 1.4;
 }
 
-/* New style for Hashtag */
+/* New style for Hashtag - REMOVE/REPLACE OLD .popup-hashtag styles */
+/* The following .popup-hashtag rule (from previous step) should be removed or commented out */
+/*
 .popup-hashtag {
-    font-size: 0.8em;
-    color: #007bff; /* Blue color for hashtag */
-    margin-top: 10px; /* Space above the hashtag */
-    font-weight: 500;
-    cursor: pointer; /* Add pointer cursor */
-    text-decoration: none; /* Remove default underline if any from other rules */
-    transition: color 0.2s ease; /* Smooth transition for hover */
+  background-color: #f0f0f0; // Light grey
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px; // Optional: space after description
+  font-size: 0.9em;
+  // Add other styles to make it look like a footer if desired
+}
+*/
+
+/* New styles for the hashtag container and individual items */
+.popup-hashtag-container {
+  background-color: #f0f0f0; /* Light grey background */
+  /* Negative margins to extend to edges of .maplibregl-popup-content (which has 10px padding) */
+  margin-left: -10px;
+  margin-right: -10px;
+  margin-bottom: -10px; /* Extends to the bottom edge of popup content padding */
+  margin-top: 10px; /* Space from description above */
+  padding: 10px 10px; /* Padding for content within the container */
+  border-bottom-left-radius: 4px; /* Match popup's border-radius */
+  border-bottom-right-radius: 4px; /* Match popup's border-radius */
+  text-align: left; /* Align hashtag items to the left within the container */
 }
 
-.popup-hashtag:hover {
-    color: #0056b3; /* Darker blue on hover */
-    text-decoration: underline; /* Underline on hover */
+.popup-hashtag-item {
+  display: inline-block; /* Allows items to sit side-by-side and wrap */
+  font-size: 0.8em;
+  color: #007bff; /* Blue color for hashtag */
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  margin-right: 8px; /* Space between hashtag items */
+  margin-bottom: 4px; /* Space if items wrap to new line */
+}
+
+.popup-hashtag-item:last-child {
+  margin-right: 0;
+}
+
+.popup-hashtag-item:hover {
+  color: #0056b3; /* Darker blue on hover */
+  text-decoration: underline;
 }
 
 #modal-logo {
@@ -790,4 +822,20 @@ body {
     border-radius: 50%; /* Makes it circular if desired */
     cursor: pointer;
     box-shadow: 0 0 5px rgba(0,0,0,0.3); /* Adds a subtle shadow */
+}
+
+/* In your CSS file */
+.popup-description-scrollable {
+  max-height: 80px; /* Adjust as needed */
+  overflow-y: auto;
+  margin-bottom: 8px; /* Optional: space before hashtag */
+}
+
+.popup-hashtag {
+  background-color: #f0f0f0; /* Light grey */
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px; /* Optional: space after description */
+  font-size: 0.9em;
+  /* Add other styles to make it look like a footer if desired */
 }

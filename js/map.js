@@ -2,7 +2,8 @@
 const sheetId = '1SkLkL2Hfw5wD3-ZfASaT5H4lCwMKRvkSGL1HZpVWMGs';
 const apiUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/map?key=AIzaSyAUi4KazffmDZV_dQUnMUKA1jJt4i0mqlU';
 
-const useLocalData = true; // SET TO true TO USE LOCAL JSON, false FOR API
+const githubDataUrl = 'https://raw.githubusercontent.com/yohman/kiseki/main/sheets_data.json'; // New GitHub Raw URL
+const useLocalData = true; // SET TO true TO USE LOCAL JSON as a secondary option if GitHub fails, false FOR API as secondary
 const localDataPath = 'sheets_data.json'; // Path to your local data file (relative to index.html)
 
 let sheet = null;
@@ -12,15 +13,16 @@ let map; // Declare map globally
 let markers = []; // To keep track of marker instances
 let basemapLayers = [];
 let currentFilteredData = []; // For search results
+let globalSearchTermFromUrl = null; // To store search term from URL
 
 let currentBasemapId = 'esri-world-imagery'; // Default active basemap changed to Google Satellite ("Today")
-// Global state for initial map view, potentially from URL
+// Global state for initial map view
 let mapInitState = {
-	lat: null,
-	lon: null,
-	zoom: null,
-	basemapIdFromUrl: null,
-	urlStateApplied: false
+	lat: null, // Will no longer be set by URL
+	lon: null, // Will no longer be set by URL
+	zoom: null, // Will no longer be set by URL
+	basemapIdFromUrl: null, // Will no longer be set by URL
+	urlStateApplied: false // Will remain false
 };
 
 function initializeBasemapData() {
@@ -200,34 +202,68 @@ function initializeBasemapData() {
 
 // Main data fetching and initialization logic
 function fetchDataAndInitialize() {
-    if (useLocalData) {
-        console.log(`Attempting to fetch local data from: ${localDataPath}`);
-        fetch(localDataPath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok for ${localDataPath}: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(localJsonData => {
-                // Assuming sheets_data.json has a key 'map' (matching your sheet name in getdata.py)
-                // and its value is the array of rows (including headers)
-                if (localJsonData && localJsonData.map && Array.isArray(localJsonData.map)) {
-                    sheet = localJsonData.map; // Assign the array of rows to 'sheet'
-                    console.log("Successfully loaded data from local sheets_data.json");
-                    processAndSetupMap();
-                } else {
-                    console.error('Local JSON data is not in the expected format (missing "map" array or not an array). Attempting API fallback.');
-                    fetchFromApi(); // Fallback
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching or processing local JSON data:', error);
-                console.log("Falling back to API fetch due to local data error.");
-                fetchFromApi(); // Fallback
-            });
-    } else {
-        fetchFromApi();
+    console.log(`Attempting to fetch data from primary source: GitHub Raw URL (${githubDataUrl})`);
+    fetch(githubDataUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok for ${githubDataUrl}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(githubJsonData => {
+            // Assuming sheets_data.json has a key 'map'
+            // and its value is the array of rows (including headers)
+            if (githubJsonData && githubJsonData.map && Array.isArray(githubJsonData.map)) {
+                sheet = githubJsonData.map; // Assign the array of rows to 'sheet'
+                console.log("Successfully loaded data from GitHub Raw URL");
+                processAndSetupMap();
+            } else {
+                console.error('GitHub Raw JSON data is not in the expected format (missing "map" array or not an array).');
+                // Throw an error to trigger the catch block and proceed to fallbacks
+                throw new Error('GitHub data format error. Proceeding to fallback.');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching or processing GitHub Raw JSON data:', error);
+            console.log("Falling back to secondary data source options.");
+
+            // Secondary: Local data or API based on useLocalData
+            if (useLocalData) {
+                console.log(`Attempting to fetch local data from: ${localDataPath}`);
+                fetch(localDataPath)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Network response was not ok for ${localDataPath}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(localJsonData => {
+                        if (localJsonData && localJsonData.map && Array.isArray(localJsonData.map)) {
+                            sheet = localJsonData.map;
+                            console.log("Successfully loaded data from local sheets_data.json");
+                            processAndSetupMap();
+                        } else {
+                            console.error('Local JSON data is not in the expected format (missing "map" array or not an array). Attempting API fallback.');
+                            fetchFromApi(); // Fallback to API
+                        }
+                    })
+                    .catch(localError => {
+                        console.error('Error fetching or processing local JSON data:', localError);
+                        console.log("Falling back to API fetch due to local data error.");
+                        fetchFromApi(); // Fallback to API
+                    });
+            } else {
+                fetchFromApi(); // Fetch from API if not using local data as secondary
+            }
+        });
+}
+
+// NEW function to parse URL query parameters
+function parseUrlQueryParameters() {
+    const queryParams = new URLSearchParams(window.location.search);
+    if (queryParams.has('s')) {
+        globalSearchTermFromUrl = queryParams.get('s');
+        console.log("Search term from URL:", globalSearchTermFromUrl);
     }
 }
 
@@ -314,6 +350,7 @@ function processAndSetupMap() {
     // Update the modal with the count of memories
     const memoriesCountElement = document.getElementById('mapping-memories-count');
     if (memoriesCountElement) {
+        // This sets the total count initially. It might be updated in setupMapAndUI if a URL search term is present.
         memoriesCountElement.textContent = `Mapping ${sheet2.length} memories...`;
     } else {
         console.warn("Element with ID 'mapping-memories-count' not found in the modal.");
@@ -348,19 +385,46 @@ fetchDataAndInitialize();
 
 function setupMapAndUI() {
     console.log("Setting up map and UI...");
-    parseUrlHash(); // Sets mapInitState.urlStateApplied
+    parseUrlQueryParameters(); // Parse URL for ?s=searchTerm
     initializeBasemapData();
+    // The following condition will no longer be met as basemapIdFromUrl will be null
     if (mapInitState.basemapIdFromUrl && basemapLayers.find(b => b.id === mapInitState.basemapIdFromUrl)) {
         currentBasemapId = mapInitState.basemapIdFromUrl;
     }
-    initMapInstance(); // This will call refreshMapContent internally on style.load
-    populateSidebar(currentFilteredData);
-    populateHorizontalScroller(currentFilteredData);
+
+    if (globalSearchTermFromUrl) {
+        const searchInput = document.getElementById('search-input');
+        const searchContainer = document.getElementById('search-container');
+        if (searchInput) {
+            searchInput.value = globalSearchTermFromUrl;
+        }
+        if (searchContainer) {
+            searchContainer.classList.add('search-active');
+        }
+        // Apply the filter. This updates currentFilteredData and refreshes UI components.
+        filterAndRefreshUI(globalSearchTermFromUrl.toLowerCase());
+
+        // Update the main memories count message in the modal to reflect the filter
+        const memoriesCountElement = document.getElementById('mapping-memories-count');
+        if (memoriesCountElement) {
+            const sanitizedSearchTerm = globalSearchTermFromUrl.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            memoriesCountElement.innerHTML = `Mapping ${currentFilteredData.length} memories based on "<strong>${sanitizedSearchTerm}</strong>"...`;
+        }
+    } else {
+        // No URL search term, ensure UI is populated with the initial full dataset.
+        // currentFilteredData is already [...sheet2] from processAndSetupMap.
+        // refreshMapContent will be called by initMapInstance on style.load.
+        // Sidebar and scroller need initial population if not filtered by URL.
+        populateSidebar(currentFilteredData);
+        populateHorizontalScroller(currentFilteredData);
+    }
+
+    initMapInstance(); // This will call refreshMapContent internally on style.load using currentFilteredData
     createTimelineControls();
     setupHamburgerMenu();
     setupHeaderLogoLink();
-    setupModal(); // Called after parseUrlHash
-    setupSearchFeature(); // Add this call
+    setupModal(); 
+    setupSearchFeature(); 
 }
 
 function setupModal() {
@@ -368,12 +432,8 @@ function setupModal() {
     const modalCloseButton = document.getElementById('modal-close-button');
 
     if (modalOverlay && modalCloseButton) {
-        // If URL parameters were successfully parsed and applied, hide the modal.
-        // Otherwise, it will be visible by default (as per initial HTML/CSS).
-        // The text content for 'mapping-memories-count' is set in processAndSetupMap.
-        if (mapInitState.urlStateApplied) {
-            modalOverlay.classList.add('modal-hidden');
-        }
+        // The text content for 'mapping-memories-count' is set in processAndSetupMap
+        // and potentially updated in setupMapAndUI if a URL search term is present.
 
         modalCloseButton.addEventListener('click', () => {
             modalOverlay.classList.add('modal-hidden');
@@ -386,7 +446,7 @@ function setupHeaderLogoLink() {
 	if (logoLink) {
 		logoLink.addEventListener('click', (event) => {
 			event.preventDefault(); // Prevent default anchor behavior
-			window.location.hash = ''; // Clear the hash
+			// window.location.hash = ''; // Clear the hash - No longer managing hash
 			window.location.reload(); // Reload the page to reset to defaults
 		});
 	}
@@ -413,6 +473,8 @@ function setupHamburgerMenu() {
 	}
 }
 
+// Removed parseUrlHash function
+/*
 function parseUrlHash() {
 	if (window.location.hash) {
 		const hash = window.location.hash.substring(1); // Remove #
@@ -439,7 +501,10 @@ function parseUrlHash() {
 		}
 	}
 }
+*/
 
+// Removed updateUrlHash function
+/*
 function updateUrlHash() {
 	if (!map) return;
 	const center = map.getCenter();
@@ -460,6 +525,7 @@ function updateUrlHash() {
 		window.location.hash = newHash;
 	}
 }
+*/
 
 
 function initMapInstance() {
@@ -499,6 +565,7 @@ function initMapInstance() {
 	let initialCenter = [140.123, 35.605]; // New default center
 	let initialZoom = 10; // New default zoom
 
+    // These conditions will no longer be met as urlStateApplied will be false
 	if (mapInitState.urlStateApplied && mapInitState.lon !== null && mapInitState.lat !== null) {
 		initialCenter = [mapInitState.lon, mapInitState.lat];
 	}
@@ -524,8 +591,8 @@ function initMapInstance() {
 
 	});
 
-	map.on('moveend', updateUrlHash);
-	map.on('zoomend', updateUrlHash);
+	// map.on('moveend', updateUrlHash); // Removed
+	// map.on('zoomend', updateUrlHash); // Removed
 }
 
 function refreshMapContent(dataToDisplay) { // Modified to accept data
@@ -625,7 +692,19 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 		let hashtagHTML = '';
 		if (hashtag) {
 			// Add onclick to trigger search with the hashtag text
-			hashtagHTML = `<p class="popup-hashtag" onclick="triggerSearchFromElement(this, '${hashtag.replace(/'/g, "\\'")}')">${hashtag}</p>`;
+			// hashtagHTML = `<p class="popup-hashtag" onclick="triggerSearchFromElement(this, '${hashtag.replace(/'/g, "\\'")}')">${hashtag}</p>`; // Old single hashtag logic
+
+			const individualHashtags = hashtag.split(/\s+/).filter(Boolean); // Split by space, remove empty strings
+			if (individualHashtags.length > 0) {
+				let hashtagLinksHTML = '';
+				individualHashtags.forEach(h => {
+					const sanitizedHashtag = h.replace(/'/g, "\\'"); // For use in JS string
+					const displayHashtag = h; // Original part for display
+					hashtagLinksHTML += `<span class="popup-hashtag-item" onclick="triggerSearchFromElement(this, '${sanitizedHashtag}')">${displayHashtag}</span> `;
+				});
+				// Wrap all hashtag items in a container for styling the background block
+				hashtagHTML = `<div class="popup-hashtag-container">${hashtagLinksHTML.trim()}</div>`;
+			}
 		}
 
 
@@ -635,8 +714,10 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 			<h3>${title}</h3>
 			${genrePillHTML}
 			<p class="popup-author-detail">${author}</p>
-			<p>${description}</p>
-			${hashtagHTML}
+			<div class="popup-description-scrollable"> <!-- Wrapper for scrollable description -->
+				<p>${description}</p>
+			</div>
+			${hashtagHTML} <!-- This will now insert the div.popup-hashtag-container -->
 		</div>`;
 
 		const popup = new maplibregl.Popup({
@@ -658,8 +739,9 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 		validMarkersExist = true;
 	});
 
-	// Only fitBounds if the view wasn't set by URL parameters AND it's the initial load (no search term)
-	if (!mapInitState.urlStateApplied && validMarkersExist && !bounds.isEmpty() && document.getElementById('search-input').value === '') {
+	// Only fitBounds if it's the initial load (no search term)
+	// and view wasn't set by URL (which is now always true as urlStateApplied is false)
+	if (validMarkersExist && !bounds.isEmpty() && document.getElementById('search-input').value === '') {
 		map.fitBounds(bounds, {
 			padding: {
 				top: 100,
@@ -669,9 +751,9 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 			},
 			maxZoom: 17
 		});
-	} else if (!mapInitState.urlStateApplied && dataToDisplay.length > 0 && (!validMarkersExist || bounds.isEmpty())) {
+	} else if (dataToDisplay.length > 0 && (!validMarkersExist || bounds.isEmpty())) {
 		console.warn("No valid markers to bound for current filter, map initialized with default/current center/zoom.");
-	} else if (!mapInitState.urlStateApplied && dataToDisplay.length === 0) {
+	} else if (dataToDisplay.length === 0) {
 		console.log("No data for current filter, map initialized with default/current center/zoom.");
 	}
 }
@@ -823,7 +905,7 @@ function switchBasemap(basemapId) {
 		currentBasemapId = newBasemap.id;
 		map.setStyle(newBasemap.style); // This will trigger 'style.load' which calls refreshMapContent
 		// Update URL hash after basemap change
-		updateUrlHash();
+		// updateUrlHash(); // Removed
 
 		document.querySelectorAll('.timeline-controls .timeline-item').forEach(itemEl => {
 			const circleEl = itemEl.querySelector('.timeline-circle');
@@ -877,7 +959,7 @@ function goto(id) {
 			speed: 0.5, // Slower flyTo speed
 			zoom: 16 // Consider making this zoom level also part of URL or a setting
 		});
-		// updateUrlHash will be called by 'moveend' event
+		// updateUrlHash will be called by 'moveend' event - No longer applicable
 		// Optionally, open the popup for the marker
 		const targetMarker = markers.find(m => {
 			const markerLngLat = m.getLngLat();
