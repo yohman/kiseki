@@ -2,7 +2,8 @@
 const sheetId = '1SkLkL2Hfw5wD3-ZfASaT5H4lCwMKRvkSGL1HZpVWMGs';
 const apiUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/map?key=AIzaSyAUi4KazffmDZV_dQUnMUKA1jJt4i0mqlU';
 
-const githubDataUrl = 'https://raw.githubusercontent.com/yohman/kiseki/main/sheets_data.json'; // New GitHub Raw URL
+// const githubDataUrl = 'https://raw.githubusercontent.com/yohman/kiseki/main/sheets_data.json'; // New GitHub Raw URL
+const githubDataUrl = 'https://raw.githubusercontent.com/yohman/kiseki/refs/heads/main/sheets_data.json'; // New GitHub Raw URL
 const useLocalData = true; // SET TO true TO USE LOCAL JSON as a secondary option if GitHub fails, false FOR API as secondary
 const localDataPath = 'sheets_data.json'; // Path to your local data file (relative to index.html)
 
@@ -310,9 +311,7 @@ function processAndSetupMap() {
         // Col 5: Age, Col 6: Avatar Name (e.g., "sport-boy"), Col 7: Hashtag, Col 8: Genre
         // The 'id > 0' check correctly skips the header row (where id is 0).
         if (id > 0 && element && element.length > 6 && element[4] !== undefined && element[6] !== undefined) {
-            // Create a mutable copy of the row to avoid modifying the original 'sheet' data directly.
             let processedElement = [...element];
-
             let coordSource = processedElement[4];
             let processedCoordString = null;
 
@@ -326,22 +325,21 @@ function processAndSetupMap() {
             }
 
             if (processedCoordString && processedCoordString.includes(',')) {
-                processedElement[4] = processedCoordString; // Update element with cleaned string
-
-                const avatarName = processedElement[6]; // From original structure
+                processedElement[4] = processedCoordString;
+                // Always use index 6 from the original data for avatar name
+                const avatarName = element[6];
                 const avatarUrl = `images/avatars/${avatarName}.png`;
-                processedElement.push(avatarUrl); // Add constructed avatarUrl to the end
-
-                processedElement.unshift(id); // Add unique ID (current value of `id` counter, e.g., 1, 2, ...)
+                // Place avatarUrl at the end of the processedElement array
+                processedElement.push(avatarUrl);
+                processedElement.unshift(id);
                 sheet2.push(processedElement);
             } else {
                 console.warn(`Skipping data row (id ${id}) due to invalid coordinates (no comma after processing):`, element, "Raw coord data:", coordSource);
             }
-        } else if (id > 0) { // This catches data rows (id > 0) that failed the primary check (e.g. malformed)
+        } else if (id > 0) {
             console.warn(`Skipping data row (id ${id}) due to incomplete data structure or missing essential fields:`, element);
         }
-        // If id === 0 (header row), it's skipped by the `if (id > 0 ...)` conditions.
-        id++; // Increment for every row in the original sheet
+        id++;
     });
 
     console.log("Processed sheet2 data (with added ID and avatar URL):", sheet2);
@@ -626,12 +624,12 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 			console.warn("Skipping item in refreshMapContent due to missing or invalid coordinates string at item[5]:", item[3] || `Item ID ${item[0]}`, "Coords string:", item[5]);
 			return;
 		}
-		if (!item[10]) { // Check for avatarUrl (now at index 10)
-			console.warn("Skipping item in refreshMapContent due to missing avatarUrl at item[10]:", item[3] || `Item ID ${item[0]}`);
+		// item[...]=..., item[6]=Avatar Name, ..., item[item.length-1]=avatarUrl
+		const imageUrl = item[item.length - 1]; // Always use the last element for avatarUrl
+		if (!imageUrl) {
+			console.warn("Skipping item in refreshMapContent due to missing avatarUrl:", item[3] || `Item ID ${item[0]}`);
 			return;
 		}
-
-		const itemId = item[0];
 
 		let latlonArray;
 		try {
@@ -648,7 +646,6 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 		const author = item[2] || 'N/A';
 		const title = item[3] || 'N/A';
 		const description = item[4] || 'No description.';
-		const imageUrl = item[10]; // Use constructed avatarUrl from item[10]
 		const genre = item[9] || ''; // Genre from item[9]
 		const hashtag = item[8] || ''; // Hashtag from item[8]
 
@@ -765,12 +762,12 @@ function populateSidebar(dataToDisplay) { // Modified to accept data
 
 	dataToDisplay.forEach(function(item) { // Use dataToDisplay
 		// item[0]=id, item[2]=Author, item[10]=avatarUrl
-		if (item[0] === undefined || item[2] === undefined || item[10] === undefined) {
+		if (item[0] === undefined || item[2] === undefined || item[item.length - 1] === undefined) {
 			return;
 		}
 		const itemId = item[0];
 		const author = item[2];
-		const avatarUrl = item[10]; // Avatar URL is at index 10
+		const avatarUrl = item[item.length - 1]; // Avatar URL is at index 10
 
 		const sidebarItemHTML = `
 		<div class="sidebar-item" onclick="goto(${itemId})">
@@ -788,12 +785,12 @@ function populateHorizontalScroller(dataToDisplay) { // Modified to accept data
 
 	dataToDisplay.forEach(function(item) { // Use dataToDisplay
 		// item[0]=id, item[2]=Author, item[10]=avatarUrl
-		if (item[0] === undefined || item[2] === undefined || item[10] === undefined) {
+		if (item[0] === undefined || item[2] === undefined || item[item.length - 1] === undefined) {
 			return;
 		}
 		const itemId = item[0];
 		const author = item[2];
-		const avatarUrl = item[10]; // Avatar URL is at index 10
+		const avatarUrl = item[item.length - 1]; // Avatar URL is at index 10
 
 		const cardHTML = `
 		<div class="horizontal-card" data-id="${itemId}" onclick="goto(${itemId})">
