@@ -203,59 +203,84 @@ function initializeBasemapData() {
 
 // Main data fetching and initialization logic
 function fetchDataAndInitialize() {
-    console.log(`Attempting to fetch data from primary source: GitHub Raw URL (${githubDataUrl})`);
-    fetch(githubDataUrl)
+    // Try Google Sheets API first
+    console.log(`Attempting to fetch data from Google Sheets API (${apiUrl})`);
+    fetch(apiUrl)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Network response was not ok for ${githubDataUrl}: ${response.statusText}`);
+                // Only fallback for rate limit or server errors
+                if ([403, 429, 503].includes(response.status)) {
+                    console.log(`Google Sheets API rate limit or server error encountered (status: ${response.status})`);
+                    throw new Error(`API rate/server error (${response.status})`);
+                }
+                throw new Error(`Network response was not ok from API: ${response.statusText}`);
             }
             return response.json();
         })
-        .then(githubJsonData => {
-            // Assuming sheets_data.json has a key 'map'
-            // and its value is the array of rows (including headers)
-            if (githubJsonData && githubJsonData.map && Array.isArray(githubJsonData.map)) {
-                sheet = githubJsonData.map; // Assign the array of rows to 'sheet'
-                console.log("Successfully loaded data from GitHub Raw URL");
+        .then(data => {
+            if (data && data.values && Array.isArray(data.values)) {
+                sheet = data.values;
+                console.log("Successfully loaded data from Google Sheets API");
+                console.log("Data source: Google Sheets API");
                 processAndSetupMap();
             } else {
-                console.error('GitHub Raw JSON data is not in the expected format (missing "map" array or not an array).');
-                // Throw an error to trigger the catch block and proceed to fallbacks
-                throw new Error('GitHub data format error. Proceeding to fallback.');
+                console.error("API response did not contain 'values' array.", data);
+                throw new Error("API response format error");
             }
         })
-        .catch(error => {
-            console.error('Error fetching or processing GitHub Raw JSON data:', error);
-            console.log("Falling back to secondary data source options.");
-
-            // Secondary: Local data or API based on useLocalData
-            if (useLocalData) {
-                console.log(`Attempting to fetch local data from: ${localDataPath}`);
-                fetch(localDataPath)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Network response was not ok for ${localDataPath}: ${response.statusText}`);
-                        }
-                        return response.json();
-                    })
-                    .then(localJsonData => {
-                        if (localJsonData && localJsonData.map && Array.isArray(localJsonData.map)) {
-                            sheet = localJsonData.map;
-                            console.log("Successfully loaded data from local sheets_data.json");
-                            processAndSetupMap();
-                        } else {
-                            console.error('Local JSON data is not in the expected format (missing "map" array or not an array). Attempting API fallback.');
-                            fetchFromApi(); // Fallback to API
-                        }
-                    })
-                    .catch(localError => {
-                        console.error('Error fetching or processing local JSON data:', localError);
-                        console.log("Falling back to API fetch due to local data error.");
-                        fetchFromApi(); // Fallback to API
-                    });
-            } else {
-                fetchFromApi(); // Fetch from API if not using local data as secondary
-            }
+        .catch(apiError => {
+            console.error('Error fetching or processing Google Sheets API data:', apiError);
+            // Fallback to GitHub Raw JSON
+            console.log(`Falling back to GitHub Raw URL (${githubDataUrl})`);
+            fetch(githubDataUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok for ${githubDataUrl}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(githubJsonData => {
+                    if (githubJsonData && githubJsonData.map && Array.isArray(githubJsonData.map)) {
+                        sheet = githubJsonData.map;
+                        console.log("Successfully loaded data from GitHub Raw URL");
+                        console.log("Data source: GitHub Raw JSON");
+                        processAndSetupMap();
+                    } else {
+                        console.error('GitHub Raw JSON data is not in the expected format (missing "map" array or not an array).');
+                        throw new Error('GitHub data format error. Proceeding to fallback.');
+                    }
+                })
+                .catch(githubError => {
+                    console.error('Error fetching or processing GitHub Raw JSON data:', githubError);
+                    // Final fallback: Local data or API based on useLocalData
+                    if (useLocalData) {
+                        console.log(`Attempting to fetch local data from: ${localDataPath}`);
+                        fetch(localDataPath)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`Network response was not ok for ${localDataPath}: ${response.statusText}`);
+                                }
+                                return response.json();
+                            })
+                            .then(localJsonData => {
+                                if (localJsonData && localJsonData.map && Array.isArray(localJsonData.map)) {
+                                    sheet = localJsonData.map;
+                                    console.log("Successfully loaded data from local sheets_data.json");
+                                    console.log("Data source: Local JSON");
+                                    processAndSetupMap();
+                                } else {
+                                    console.error('Local JSON data is not in the expected format (missing "map" array or not an array).');
+                                    alert("Failed to load map data from all sources. The map may not function correctly.");
+                                }
+                            })
+                            .catch(localError => {
+                                console.error('Error fetching or processing local JSON data:', localError);
+                                alert("Failed to load map data. Please check your internet connection or try again later.");
+                            });
+                    } else {
+                        alert("Failed to load map data. Please check your internet connection or try again later.");
+                    }
+                });
         });
 }
 
