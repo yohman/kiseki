@@ -864,14 +864,15 @@ body {
 
 /* Kiseki Modal Title and Options */
 .kiseki-modal-title {
-	font-size: 2.1em;
-	font-weight: bold;
-	color: #fff;
+	font-family: 'Shippori Mincho', serif;
+	font-size: 2.3em;
+	font-weight: 600;
+	font-style: normal;
+	color: #f5f5f5;
 	margin-bottom: 18px;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.05em;
 	text-align: center;
 }
-
 .kiseki-modal-options-row {
 	display: flex;
 	justify-content: center;
@@ -986,17 +987,20 @@ body {
 	display: inline-block; /* Always inline-block so fade-in works */
 	visibility: hidden;    /* Start hidden, shown by fade-in */
 	opacity: 0;
-	margin: 0 auto 18px auto;
+	margin: 0 0px 18px -10px; /* Ensure horizontal centering */
 	padding: 10px 22px;
 	border-radius: 22px;
 	background: linear-gradient(90deg, #888 0%, #444 100%); /* Grayscale gradient */
 	color: #fff; /* White text for contrast */
 	font-size: 1.05em;
 	font-weight: 500;
+    		font-family: 'Shippori Mincho', serif;
+
+
 	box-shadow: 0 2px 16px rgba(80,80,80,0.13);
 	cursor: pointer;
 	transition: background 0.3s, color 0.3s, box-shadow 0.3s, opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), visibility 0s linear 0.7s;
-	transform: translateY(30px) scale(0.95);
+	transform: translateX(-50%) translateY(30px) scale(0.95); /* Adjust centering and animations */
 	position: relative;
 	max-width: 95%;
 	overflow: hidden;
