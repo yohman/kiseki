@@ -9,6 +9,8 @@ const localDataPath = 'sheets_data.json'; // Path to your local data file (relat
 
 let sheet = null;
 let sheet2 = []; // Initialize sheet2
+let pillTimeout = null;
+let pillFadeTimeout = null;
 
 let map; // Declare map globally
 let markers = []; // To keep track of marker instances
@@ -29,6 +31,9 @@ let mapInitState = {
 
 // create a global variable array of objects for the master data
 let masterData = []; // This will hold the processed data for the map
+
+// Global variable to track modal state
+let isModalOpen = true;
 
 
 // begin...
@@ -302,7 +307,181 @@ function setupMapAndUI() {
 	setupHamburgerMenu();
 	setupHeaderLogoLink();
 	setupModal(); 
-	setupSearchFeature(); 
+	setupSearchFeature();
+
+	// Start the random memory pill after everything is ready
+	console.log("Calling startRandomMemoryPill...");
+	startRandomMemoryPill(); // Call the memory pill logic after everything is set up
+}
+
+// --- Random Memory Pill Logic ---
+function startRandomMemoryPill() {
+	console.log("Starting random memory pill...");
+	const pill = document.getElementById('random-memory-pill');
+	const modalOverlay = document.getElementById('welcome-modal-overlay');
+
+	// Debugging: Check if pill element exists
+	if (!pill) {
+		console.error("Memory pill element not found in the DOM.");
+		return;
+	}
+
+	// Debugging: Check if masterData is populated
+	if (!masterData || !Array.isArray(masterData) || masterData.length === 0) {
+		console.warn("Master data is not ready. Retrying...");
+		setTimeout(startRandomMemoryPill, 400);
+		return;
+	}
+
+	let memories = masterData.filter(m => m['Title'] && m['Description'] && m['id']);
+	if (memories.length === 0) {
+		console.warn("No valid memories found for the pill.");
+		return;
+	}
+
+	let lastIndex = -1;
+
+	function showRandomMemory() {
+		console.log("Showing random memory pill...");
+		if (!memories.length) {
+			console.warn("No memories available to show.");
+			return;
+		}
+		let idx;
+		do {
+			idx = Math.floor(Math.random() * memories.length);
+		} while (memories.length > 1 && idx === lastIndex);
+		lastIndex = idx;
+		const m = memories[idx];
+		const pillText = `<span class="pill-title">${m['Title']}</span> <span class="pill-desc">${m['Description']}</span>`;
+		pill.innerHTML = pillText;
+		pill.setAttribute('data-id', m['id']);
+		pill.classList.remove('fade-out');
+		pill.classList.add('fade-in');
+		pill.style.visibility = 'visible';
+
+		clearTimeout(pillFadeTimeout);
+		pillFadeTimeout = setTimeout(() => {
+			pill.classList.remove('fade-in');
+			pill.classList.add('fade-out');
+			setTimeout(() => {
+				pill.style.visibility = 'hidden';
+			}, 700);
+		}, 3400);
+	}
+
+	function cycle() {
+		console.log("Cycling random memory pill...");
+		showRandomMemory();
+		clearTimeout(pillTimeout);
+		pillTimeout = setTimeout(cycle, 4800);
+	}
+
+	// Ensure the first memory is shown immediately
+	showRandomMemory();
+	pillTimeout = setTimeout(cycle, 4800);
+
+	pill.onclick = function() {
+		const id = parseInt(pill.getAttribute('data-id'), 10);
+		if (!isNaN(id)) {
+			if (modalOverlay) modalOverlay.classList.add('modal-hidden');
+			if (window.goto) setTimeout(() => window.goto(id), 350);
+		}
+	};
+}
+
+// Function to fit bounds to currently filtered markers
+function fitBoundsToFilteredMarkers() {
+	console.log("Fitting bounds to filtered markers...");
+	if (!map || currentFilteredData.length === 0) return;
+
+	const bounds = new maplibregl.LngLatBounds();
+	let hasValidMarkers = false;
+
+	currentFilteredData.forEach(item => {
+		if (item['Coordinates'] && typeof item['Coordinates'] === 'string' && item['Coordinates'].includes(',')) {
+			const latlonArray = item['Coordinates'].split(',').map(Number);
+			if (latlonArray.length === 2 && !isNaN(latlonArray[0]) && !isNaN(latlonArray[1])) {
+				bounds.extend([latlonArray[1], latlonArray[0]]);
+				hasValidMarkers = true;
+			}
+		}
+	});
+
+	if (hasValidMarkers && !bounds.isEmpty()) {
+		map.fitBounds(bounds, {
+			padding: { top: 100, bottom: 100, left: 100, right: 100 },
+			maxZoom: 17,
+			pitch: 50
+		});
+	}
+}
+
+function setupModal() {
+	const modalOverlay = document.getElementById('welcome-modal-overlay');
+	const modalCloseButton = document.getElementById('modal-close-button');
+	const exploreButton = document.getElementById('modal-explore-btn');
+
+	if (modalOverlay && exploreButton) {
+		exploreButton.addEventListener('click', () => {
+			modalOverlay.classList.add('modal-hidden');
+			isModalOpen = false; // Update modal state
+			stopRandomMemoryPill(); // Stop the random pill
+			// Wait for the modal transition to complete before fitting bounds
+			modalOverlay.addEventListener('transitionend', () => {
+				if (!isModalOpen) {
+					fitBoundsToFilteredMarkers();
+				}
+			}, { once: true });
+		});
+	}
+
+	if (modalOverlay && modalCloseButton) {
+		modalCloseButton.addEventListener('click', () => {
+			modalOverlay.classList.add('modal-hidden');
+			isModalOpen = false; // Update modal state
+			stopRandomMemoryPill(); // Stop the random pill
+		});
+	}
+}
+
+function stopRandomMemoryPill() {
+	const pill = document.getElementById('random-memory-pill');
+	if (pill) {
+		pill.style.visibility = 'hidden'; // Hide the pill
+		clearTimeout(pillTimeout); // Clear the pill timeout
+		clearTimeout(pillFadeTimeout); // Clear the fade timeout
+	}
+}
+
+function filterAndRefreshUI(searchTerm) {
+	console.log("Filtering data with search term:", searchTerm);
+	if (!searchTerm || searchTerm.trim() === '') {
+		currentFilteredData = [...masterData];
+	} else {
+		currentFilteredData = masterData.filter(item => {
+			const author = (item['Author'] || '').toLowerCase();
+			const title = (item['Title'] || '').toLowerCase();
+			const description = (item['Description'] || '').toLowerCase();
+			const hashtag = (item['Hashtag'] || '').toLowerCase();
+			const genre = (item['Genre'] || '').toLowerCase();
+
+			return author.includes(searchTerm) ||
+				title.includes(searchTerm) ||
+				description.includes(searchTerm) ||
+				hashtag.includes(searchTerm) ||
+				genre.includes(searchTerm);
+		});
+	}
+
+	refreshMapContent(currentFilteredData);
+	populateSidebar(currentFilteredData);
+	populateHorizontalScroller(currentFilteredData);
+
+	// Fit bounds only if the modal is closed
+	if (!isModalOpen) {
+		fitBoundsToFilteredMarkers();
+	}
 }
 
 // Helper function to zoom to extent of filtered markers
@@ -320,24 +499,10 @@ function zoomToFilteredMarkers(data) {
 		}
 	});
 	if (hasValid && !bounds.isEmpty()) {
-		map.fitBounds(bounds, {
-			padding: { top: 100, bottom: 100, left: 100, right: 100 },
-			maxZoom: 17
-		});
-	}
-}
-
-function setupModal() {
-	const modalOverlay = document.getElementById('welcome-modal-overlay');
-	const modalCloseButton = document.getElementById('modal-close-button');
-
-	if (modalOverlay && modalCloseButton) {
-		// The text content for 'mapping-memories-count' is set in processAndSetupMap
-		// and potentially updated in setupMapAndUI if a URL search term is present.
-
-		modalCloseButton.addEventListener('click', () => {
-			modalOverlay.classList.add('modal-hidden');
-		});
+		// map.fitBounds(bounds, {
+		// 	padding: { top: 100, bottom: 100, left: 100, right: 100 },
+		// 	maxZoom: 17
+		// });
 	}
 }
 
@@ -408,16 +573,16 @@ function initMapInstance() {
 		return;
 	}
 
-	let initialCenter = [140.123, 35.605]; // New default center
-	let initialZoom = 10; // New default zoom
+	let initialCenter = [138.2529, 36.2048]; // Center of Japan
+	let initialZoom = 0; // Zoom level to show all of Japan
 
 	map = new maplibregl.Map({
 		container: 'map',
 		style: initialBasemap.style,
 		center: initialCenter,
 		zoom: initialZoom,
-		pitch: 60, // Tilt the map
-		bearing: -17.6 // Optional: slight bearing for better 3D view
+		pitch: 0, // Tilt the map
+		bearing: 0 // Optional: slight bearing for better 3D view
 
 	});
 
@@ -576,21 +741,21 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 
 	// Only fitBounds if it's the initial load (no search term)
 	// and view wasn't set by URL (which is now always true as urlStateApplied is false)
-	if (validMarkersExist && !bounds.isEmpty() && document.getElementById('search-input').value === '') {
-		map.fitBounds(bounds, {
-			padding: {
-				top: 100,
-				bottom: 100,
-				left: 100,
-				right: 100
-			},
-			maxZoom: 17
-		});
-	} else if (dataToDisplay.length > 0 && (!validMarkersExist || bounds.isEmpty())) {
-		console.warn("No valid markers to bound for current filter, map initialized with default/current center/zoom.");
-	} else if (dataToDisplay.length === 0) {
-		console.log("No data for current filter, map initialized with default/current center/zoom.");
-	}
+	// if (validMarkersExist && !bounds.isEmpty() && document.getElementById('search-input').value === '') {
+	// 	map.fitBounds(bounds, {
+	// 		padding: {
+	// 			top: 100,
+	// 			bottom: 100,
+	// 			left: 100,
+	// 			right: 100
+	// 		},
+	// 		maxZoom: 17
+	// 	});
+	// } else if (dataToDisplay.length > 0 && (!validMarkersExist || bounds.isEmpty())) {
+	// 	console.warn("No valid markers to bound for current filter, map initialized with default/current center/zoom.");
+	// } else if (dataToDisplay.length === 0) {
+	// 	console.log("No data for current filter, map initialized with default/current center/zoom.");
+	// }
 }
 
 function populateSidebar(dataToDisplay) { // Modified to accept data
@@ -734,34 +899,6 @@ function setupSearchFeature() {
 	});
 }
 
-function filterAndRefreshUI(searchTerm) {
-	console.log("Filtering data with search term:", searchTerm);
-	if (!searchTerm || searchTerm.trim() === '') {
-		currentFilteredData = [...masterData];
-	} else {
-		currentFilteredData = masterData.filter(item => {
-			const author = (item['Author'] || '').toLowerCase();
-			const title = (item['Title'] || '').toLowerCase();
-			const description = (item['Description'] || '').toLowerCase();
-			const hashtag = (item['Hashtag'] || '').toLowerCase();
-			const genre = (item['Genre'] || '').toLowerCase(); // Full genre string for searching
-
-			return author.includes(searchTerm) ||
-				title.includes(searchTerm) ||
-				description.includes(searchTerm) ||
-				hashtag.includes(searchTerm) ||
-				genre.includes(searchTerm);
-		});
-	}
-	// When map style reloads (e.g. basemap change), it calls refreshMapContent.
-	// We need to ensure it uses the latest filtered data.
-	// So, directly call refreshMapContent here.
-	refreshMapContent(currentFilteredData);
-	populateSidebar(currentFilteredData);
-	populateHorizontalScroller(currentFilteredData);
-	// Active card highlighting in goto() will still work based on IDs.
-}
-
 function switchBasemap(basemapId) {
 	const newBasemap = basemapLayers.find(b => b.id === basemapId);
 
@@ -826,7 +963,18 @@ function goto(id) {
 			center: lngLat,
 			speed: 0.8,
 			zoom: 16,
-			offset: offset
+			offset: offset,
+			bearing: 0, // Start with no rotation
+			duration: 2000 // Duration of the flyTo animation in milliseconds
+		});
+
+		// Add rotation after flyTo animation completes
+		map.once('moveend', () => {
+			// Rotate the map 360 degrees over 30 seconds
+			map.rotateTo(360, {
+				duration: 30000,
+				easing: (x) => x // Linear easing for constant speed
+			});
 		});
 
 		const targetMarker = markers.find(m => {

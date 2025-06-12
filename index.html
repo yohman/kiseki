@@ -20,13 +20,30 @@
 
 	<div id="welcome-modal-overlay">
 		<div id="welcome-modal-content">
+			<!-- Modal Title -->
+			<div class="kiseki-modal-title">キセキを…</div>
+			<div class="kiseki-modal-options-row">
+				<a class="kiseki-modal-option kiseki-modal-option-left"
+				   id="modal-share-btn"
+				   href="https://docs.google.com/forms/d/e/1FAIpQLSfXPt1yca5nZY26U4hsEinVi0WsFPqheEV-ed_TiX7KtzGp-g/viewform?usp=header"
+				   target="_blank" rel="noopener">
+					<span class="kiseki-modal-jp">のこす</span>
+					
+					<span class="kiseki-modal-en">share</span>
+				</a>
+				<div class="kiseki-modal-divider"></div>
+				<button class="kiseki-modal-option kiseki-modal-option-right" id="modal-explore-btn" type="button">
+					<span class="kiseki-modal-jp">たどる</span>
+					
+					<span class="kiseki-modal-en">explore</span>
+				</button>
+			</div>
 			<!-- <h1>Mapろう！</h1> -->
-			<img src="images/kiseki.png" alt="Mapろう！ Logo" id="modal-logo" width="100%">
+			<!-- <img src="images/kiseki.png" alt="Mapろう！ Logo" id="modal-logo" width="100%"> -->
 			<img src="images/qrcode.png" alt="QR Code" id="modal-qrcode">
-			<a href="https://docs.google.com/forms/d/e/1FAIpQLSfXPt1yca5nZY26U4hsEinVi0WsFPqheEV-ed_TiX7KtzGp-g/viewform?usp=header" target="_blank" id="form-link">あなたの思い出を載せよう！➡︎</a>
-			<p id="mapping-memories-count"></p> <!-- Added this line -->
-			<p class="slogan">地図と物語で、未知の世界へ飛び込もう！</p>
-			<button id="modal-close-button">冒険を始める！ <br>Begin your journey &rarr;</button>
+
+			<p id="mapping-memories-count"></p>
+			<div id="random-memory-pill" class="random-memory-pill">memory pill</div>
 		</div>
 	</div>
 

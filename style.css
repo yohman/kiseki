@@ -602,11 +602,32 @@ body {
 }
 
 #modal-qrcode {
-	width: 220px; /* Adjusted size */
-	height: 220px; /* Adjusted size */
-	margin: 10px auto 5px; /* Reduced bottom margin */
+	width: 60%;
+	max-width: 340px;
+	height: auto;
+	margin: 18px auto 5px;
 	display: block;
-	filter: invert(100%); /* Invert the colors for dark mode */
+	filter: invert(100%);
+}
+
+/* Responsive: on small screens, still use 80% width but cap max-width */
+@media (max-width: 600px) {
+	#modal-qrcode {
+		width: 60%;
+		max-width: 95vw;
+		height: auto;
+		margin-bottom: 5px;
+	}
+}
+
+/* Ensure QR code is large on very small screens too */
+@media (max-width: 500px) {
+	#modal-qrcode {
+		width: 95vw;
+		max-width: 95vw;
+		height: auto;
+		margin-bottom: 5px;
+	}
 }
 
 #form-link {
@@ -763,11 +784,12 @@ body {
 		font-size: 1.8em;
 	}
 
-	#modal-qrcode {
-		width: 120px;
-		height: 120px;
-		margin-bottom: 5px; /* Reduced bottom margin */
-	}
+    #modal-qrcode {
+        width: 60%;
+        height: auto; /* Maintain aspect ratio */
+        aspect-ratio: 1 / 1; /* Enforce square aspect ratio */
+        margin-bottom: 5px; /* Reduced bottom margin */
+    }
 
     #form-link {
         margin: 5px auto 10px; /* Adjusted margin for smaller screens */
@@ -838,4 +860,168 @@ body {
   margin-top: 8px; /* Optional: space after description */
   font-size: 0.9em;
   /* Add other styles to make it look like a footer if desired */
+}
+
+/* Kiseki Modal Title and Options */
+.kiseki-modal-title {
+	font-size: 2.1em;
+	font-weight: bold;
+	color: #fff;
+	margin-bottom: 18px;
+	letter-spacing: 0.08em;
+	text-align: center;
+}
+
+.kiseki-modal-options-row {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	width: 100%;
+	margin-bottom: 18px;
+	position: relative;
+}
+
+.kiseki-modal-option {
+	flex: 1 1 0;
+	background: #444; /* Dark gray background */
+	color: #eee; /* Light gray text */
+	border: 2px solid transparent; /* Add border for button-like appearance */
+	border-radius: 0;
+	padding: 18px 0 14px 0;
+	font-size: 1.4em;
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+	outline: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	z-index: 1;
+	text-decoration: none; /* Prevent underline for both <a> and <button> */
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Stronger shadow for button effect */
+}
+
+.kiseki-modal-option:hover,
+.kiseki-modal-option:focus {
+	background: #222; /* Darker gray for hover */
+	color: #fff; /* Bright white text for contrast */
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Stronger shadow on hover */
+	border: 2px solid #fff; /* Highlight border on hover */
+}
+.kiseki-modal-option-right {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background: #428aa8; /* Ocean blue color */
+    color: #fff; /* Ensure text is white for contrast */
+}
+
+.kiseki-modal-option-right:hover,
+.kiseki-modal-option-right:focus {
+    background: #356482; /* Darker ocean blue on hover */
+    color: #fff; /* Maintain white text */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Stronger shadow on hover */
+}
+
+.kiseki-modal-option-left {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    background: #708238; /* Earthy green color */
+    color: #eee; /* Ensure text is light for contrast */
+}
+
+.kiseki-modal-option-left:hover,
+.kiseki-modal-option-left:focus {
+    background: #556b2f; /* Darker earthy green on hover */
+    color: #fff; /* Maintain white text */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Stronger shadow on hover */
+}
+
+
+.kiseki-modal-jp {
+	font-size: 1.2em;
+	font-weight: bold;
+	letter-spacing: 0.1em;
+}
+
+.kiseki-modal-en {
+	font-size: 0.7em;
+	color: #bbb;
+	font-weight: normal;
+	letter-spacing: 0.04em;
+}
+
+.kiseki-modal-divider {
+	width: 0;
+	border-left: 2px dotted #888;
+	margin: 0 0;
+	position: absolute;
+	left: 50%;
+	top: -12px;
+	bottom: -12px;
+	z-index: 2;
+}
+
+/* Responsive adjustments for modal options */
+@media (max-width: 600px) {
+	.kiseki-modal-title {
+		font-size: 1.3em;
+		margin-bottom: 12px;
+	}
+	.kiseki-modal-options-row {
+		margin-bottom: 12px;
+	}
+	.kiseki-modal-option {
+		font-size: 1em;
+		padding: 12px 0 10px 0;
+	}
+	.kiseki-modal-divider {
+		top: -8px;
+		bottom: -8px;
+	}
+}
+
+/* Random Memory Pill Styles */
+.random-memory-pill {
+	display: inline-block; /* Always inline-block so fade-in works */
+	visibility: hidden;    /* Start hidden, shown by fade-in */
+	opacity: 0;
+	margin: 0 auto 18px auto;
+	padding: 10px 22px;
+	border-radius: 22px;
+	background: linear-gradient(90deg, #888 0%, #444 100%); /* Grayscale gradient */
+	color: #fff; /* White text for contrast */
+	font-size: 1.05em;
+	font-weight: 500;
+	box-shadow: 0 2px 16px rgba(80,80,80,0.13);
+	cursor: pointer;
+	transition: background 0.3s, color 0.3s, box-shadow 0.3s, opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), visibility 0s linear 0.7s;
+	transform: translateY(30px) scale(0.95);
+	position: relative;
+	max-width: 95%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.random-memory-pill.fade-in {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0) scale(1.04);
+	box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3); /* Stronger shadow for grayscale */
+	animation: pillPulse 0.7s cubic-bezier(.4,2,.6,1);
+	transition: opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), box-shadow 0.3s, background 0.3s, color 0.3s, visibility 0s;
+}
+
+.random-memory-pill.fade-out {
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-30px) scale(0.93);
+	transition: opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), visibility 0s linear 0.7s;
+}
+
+@keyframes pillPulse {
+	0% { transform: scale(0.92); }
+	60% { transform: scale(1.08); }
+	100% { transform: scale(1.04); }
 }
