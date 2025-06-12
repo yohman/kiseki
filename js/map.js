@@ -374,7 +374,7 @@ function startRandomMemoryPill() {
 		console.log("Cycling random memory pill...");
 		showRandomMemory();
 		clearTimeout(pillTimeout);
-		pillTimeout = setTimeout(cycle, 4800);
+		pillTimeout = setTimeout(cycle, 5800);
 	}
 
 	// Ensure the first memory is shown immediately

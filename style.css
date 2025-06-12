@@ -1007,21 +1007,20 @@ body {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
-
 .random-memory-pill.fade-in {
-	opacity: 1;
-	visibility: visible;
-	transform: translateY(0) scale(1.04);
-	box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3); /* Stronger shadow for grayscale */
-	animation: pillPulse 0.7s cubic-bezier(.4,2,.6,1);
-	transition: opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), box-shadow 0.3s, background 0.3s, color 0.3s, visibility 0s;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1); /* Keep scale at 1 */
+    box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3); /* Stronger shadow for grayscale */
+    transition: opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), box-shadow 0.3s, background 0.3s, color 0.3s, visibility 0s;
+    animation: none; /* Remove pulse animation */
 }
 
 .random-memory-pill.fade-out {
-	opacity: 0;
-	visibility: hidden;
-	transform: translateY(-30px) scale(0.93);
-	transition: opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), visibility 0s linear 0.7s;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(30px) scale(0.93);
+    transition: opacity 0.7s cubic-bezier(.4,2,.6,1), transform 0.7s cubic-bezier(.4,2,.6,1), visibility 0s linear 0.7s;
 }
 
 @keyframes pillPulse {
