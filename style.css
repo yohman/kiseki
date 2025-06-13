@@ -871,7 +871,7 @@ body {
 
 /* Kiseki Modal Title and Options */
 .kiseki-modal-title {
-	font-family: 'Shippori Mincho', serif;
+	/* font-family: 'Shippori Mincho', serif; */
 	font-size: 2.3em;
 	font-weight: 600;
 	font-style: normal;
@@ -1010,7 +1010,7 @@ body {
 	color: #fff; /* White text for contrast */
 	font-size: 1.05em;
 	font-weight: 500;
-    		font-family: 'Shippori Mincho', serif;
+    		/* font-family: 'Shippori Mincho', serif; */
 
 
 	box-shadow: 0 2px 16px rgba(80,80,80,0.13);
