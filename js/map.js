@@ -184,7 +184,7 @@ function processAndSetupMap() {
 		'緯度経度をゲット！': 'Coordinates',
 		'あなたはおいくつ？': 'Age',
 		'アバターを選ぶ': 'Avatar',
-		'#ハッシュタグ': 'Hashtag',
+		'#ハッシュタグ（複数OK）': 'Hashtag',
 		'ジャンル': 'Genre',
 		'西暦で何年の思い出？': 'Year'
 	};
