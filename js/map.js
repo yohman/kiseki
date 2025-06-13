@@ -538,6 +538,10 @@ function setupHamburgerMenu() {
 	}
 }
 
+
+let isFlying = false; // Flag to track if the map is flying
+let isRotating = false; // Global flag to track if the map is rotating
+
 // Initialize MapLibre map instance
 function initMapInstance() {
 	console.log("Initializing MapLibre map instance...");
@@ -582,7 +586,8 @@ function initMapInstance() {
 		center: initialCenter,
 		zoom: initialZoom,
 		pitch: 0, // Tilt the map
-		bearing: 0 // Optional: slight bearing for better 3D view
+		bearing: 0, // Optional: slight bearing for better 3D view,
+		maxZoom: 18 // Set a maximum zoom level
 
 	});
 
@@ -591,6 +596,23 @@ function initMapInstance() {
 		refreshMapContent(currentFilteredData); // Pass current (possibly filtered) data
 
 	});
+
+	// Handle user interactions
+	map.on('movestart', () => {
+		if (isFlying) {
+			console.log("User interrupted the map flight. Stopping ongoing animations.");
+			map.stop(); // Stop the flight if the user starts panning
+			isFlying = false; // Reset the flag
+		}
+	});
+
+    map.on('style.load', () => {
+        map.setProjection({
+            type: 'globe', // Set projection to globe
+        });
+    });
+
+
 }
 
 // this adds markers to the map based on the current data
@@ -656,6 +678,8 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 		markerContainer.style.flexDirection = 'column';
 		markerContainer.style.alignItems = 'center';
 		markerContainer.style.cursor = 'pointer'; // Add pointer cursor to indicate clickable
+		markerContainer.setAttribute('data-id', item['id']); // Set marker ID as a data attribute
+		
 
 		const iconEl = document.createElement('div');
 		iconEl.style.backgroundImage = `url(${imageUrl})`;
@@ -677,6 +701,11 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 		// Fix: Use the itemId variable defined above
 		markerContainer.addEventListener('click', function(event) {
 			event.stopPropagation();
+			console.log("Marker clicked for item ID:", item['id']);
+			console.log("Marker coordinates:", lngLat);
+			console.log("Marker title:", title);
+			console.log("Marker author:", author);
+			console.log("Marker description:", description);
 			goto(item['id']);
 		});
 
@@ -926,8 +955,30 @@ function switchBasemap(basemapId) {
 function goto(id) {
 	console.log("Going to ID:", id);
 
-	// Highlight the card in the horizontal scroller
+	// Prevent actions if the map is already flying
+	if (isFlying) {
+		console.log("Map is flying. Action blocked.");
+		return;
+	}
+
+	isFlying = true; // Set the flag to indicate the map is flying
+
+	// Disable user interactions during the flight
+	map.dragPan.disable();
+	map.scrollZoom.disable();
+	map.boxZoom.disable();
+	map.keyboard.disable();
+	map.doubleClickZoom.disable();
+	map.touchZoomRotate.disable();
+
+	// Disable clicks on horizontal cards during the fly action
 	const scroller = document.getElementById('horizontal-card-scroller');
+	if (scroller) {
+		const allCards = scroller.querySelectorAll('.horizontal-card');
+		allCards.forEach(card => card.style.pointerEvents = 'none'); // Disable clicks
+	}
+
+	// Highlight the card in the horizontal scroller
 	if (scroller) {
 		// Remove highlight from all cards
 		const allCards = scroller.querySelectorAll('.horizontal-card');
@@ -965,28 +1016,72 @@ function goto(id) {
 			zoom: 16,
 			offset: offset,
 			bearing: 0, // Start with no rotation
-			duration: 2000 // Duration of the flyTo animation in milliseconds
+			duration: 5000 // Duration of the flyTo animation in milliseconds
 		});
 
 		// Add rotation after flyTo animation completes
 		map.once('moveend', () => {
+			console.log("Flight completed.");
+			isFlying = false; // Reset the flag after the flight ends
+
+			// Re-enable user interactions
+			map.dragPan.enable();
+			map.scrollZoom.enable();
+			map.boxZoom.enable();
+			map.keyboard.enable();
+			map.doubleClickZoom.enable();
+			map.touchZoomRotate.enable();
+
+			// Re-enable clicks on horizontal cards
+			if (scroller) {
+				const allCards = scroller.querySelectorAll('.horizontal-card');
+				allCards.forEach(card => card.style.pointerEvents = 'auto'); // Enable clicks
+			}
+
 			// Rotate the map 360 degrees over 30 seconds
 			map.rotateTo(360, {
 				duration: 30000,
 				easing: (x) => x // Linear easing for constant speed
 			});
+
+			// Ensure the popup is opened after the flight completes
+			if (targetMarker && !targetMarker.getPopup().isOpen()) {
+				targetMarker.togglePopup(); // Open the popup
+			}
 		});
 
 		const targetMarker = markers.find(m => {
-			const markerLngLat = m.getLngLat();
-			return markerLngLat.lng === lngLat[0] && markerLngLat.lat === lngLat[1];
+			const markerId = parseInt(m.getElement().getAttribute('data-id'), 10); // Retrieve marker ID from its element
+			return markerId === id; // Match by ID
 		});
-		if (targetMarker && !targetMarker.getPopup().isOpen()) {
-			targetMarker.togglePopup();
+
+		if (targetMarker) {
+			console.log("Opening popup for marker with ID:", id);
+			// Ensure the popup is opened by default
+			if (!targetMarker.getPopup().isOpen()) {
+				targetMarker.togglePopup(); // Open the popup if it's not already open
+			}
+		} else {
+			console.warn("Marker not found for ID:", id, "or popup is already open.");
 		}
 
 	} else {
 		console.error("Could not find item or coordinates for id:", id);
+		isFlying = false; // Reset the flag if no valid action is performed
+
+		// Re-enable user interactions
+		map.dragPan.enable();
+		map.scrollZoom.enable();
+		map.boxZoom.enable();
+		map.keyboard.enable();
+		map.doubleClickZoom.enable();
+		map.touchZoomRotate.enable();
+
+		// Re-enable clicks on horizontal cards
+		if (scroller) {
+			const allCards = scroller.querySelectorAll('.horizontal-card');
+			allCards.forEach(card => card.style.pointerEvents = 'auto'); // Enable clicks
+		}
 	}
 }
 
@@ -1012,7 +1107,7 @@ function initializeBasemapData() {
 					type: 'raster',
 					source: 'gsi-ort-old10',
 					minzoom: 0,
-					maxzoom: 17
+					maxzoom: 19
 				}]
 			}
 		},
@@ -1036,7 +1131,7 @@ function initializeBasemapData() {
 					type: 'raster',
 					source: 'gsi-gazo1',
 					minzoom: 0,
-					maxzoom: 17
+					maxzoom: 19
 				}]
 			}
 		},
@@ -1060,7 +1155,7 @@ function initializeBasemapData() {
 					type: 'raster',
 					source: 'gsi-gazo2',
 					minzoom: 0,
-					maxzoom: 17
+					maxzoom: 19
 				}]
 			}
 		},
@@ -1084,7 +1179,7 @@ function initializeBasemapData() {
 					type: 'raster',
 					source: 'gsi-gazo3',
 					minzoom: 0,
-					maxzoom: 17
+					maxzoom: 19
 				}]
 			}
 		},
@@ -1108,7 +1203,7 @@ function initializeBasemapData() {
 					type: 'raster',
 					source: 'gsi-gazo4',
 					minzoom: 0,
-					maxzoom: 17
+					maxzoom: 19
 				}]
 			}
 		},
@@ -1164,4 +1259,59 @@ function initializeBasemapData() {
 
 
 	];
+}
+// let isRotating = false;
+let rotationFrame;
+
+function tiltAndRotateMap() {
+	if (isRotating) {
+		console.log("Map is already rotating.");
+		return;
+	}
+
+	isRotating = true;
+
+	// First, tilt and reset bearing to 0
+	map.easeTo({
+		pitch: 60,
+		bearing: 0,
+		duration: 2000,
+		easing: (t) => t
+	});
+
+	// When the tilt finishes, start manual rotation
+	map.once('moveend', () => {
+		if (isRotating) {
+			startManualRotation();
+		}
+	});
+
+	map.on('click', stopMapRotation);
+}
+
+function startManualRotation() {
+	let lastTime = performance.now();
+
+	function rotateStep(now) {
+		if (!isRotating) return;
+
+		const deltaTime = now - lastTime;
+		lastTime = now;
+
+		const bearing = map.getBearing();
+		map.setBearing(bearing + (360 / 60000) * deltaTime); // Full rotation in 60 sec
+
+		rotationFrame = requestAnimationFrame(rotateStep);
+	}
+
+	rotationFrame = requestAnimationFrame(rotateStep);
+}
+
+function stopMapRotation() {
+	if (isRotating) {
+		console.log("Stopping map rotation.");
+		isRotating = false;
+		cancelAnimationFrame(rotationFrame);
+		map.off('click', stopMapRotation);
+	}
 }

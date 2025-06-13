@@ -589,6 +589,10 @@ body {
 	pointer-events: none; /* Disable interaction when hidden */
 }
 
+#logo-link {
+    text-decoration: none; /* Remove underline */
+}
+
 #welcome-modal-content {
 	background-color: #333; /* Dark background */
 	color: #eee; /* Light text for contrast */
@@ -997,6 +1001,27 @@ body {
 		bottom: -8px;
 	}
 }
+
+
+.kiseki-header-logo {
+  font-family: 'Kosugi Maru', sans-serif;
+  text-align: center;
+  margin: 10px 0;
+  line-height: 1.1;
+}
+
+.kiseki-header-title {
+  font-size: 3em;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+.k { color: #f00; }
+.s { color: #f99; }
+.y { color: #ffd700; }
+
+
 
 /* Random Memory Pill Styles */
 .random-memory-pill {
