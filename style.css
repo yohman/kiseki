@@ -162,11 +162,12 @@ body {
 /* Remove or comment out old conflicting/unused sidebar styles from previous attempts */
 
 .content {
-    flex: 1; /* Takes remaining horizontal space in .main-area */
+    flex: 1; /* Takes remaining vertical space in .main-area */
     display: flex;
-    flex-direction: column; /* Stack map and timeline vertically */
-    position: relative; /* For potential absolute positioning of children if needed */
-    overflow: hidden; /* Prevent scrollbars on content, map/timeline handle their own */
+    flex-direction: column; /* Stack map and other elements vertically */
+    position: relative;
+    overflow: hidden; /* Prevent scrollbars on content */
+    padding-bottom: 60px; /* Match the height of the timeline controls */
 }
 
 #hamburger-menu {
@@ -315,24 +316,23 @@ body {
 #map {
     flex-grow: 1; /* Map takes available vertical space in content */
     width: 100%;
-    height: 100%; /* Ensure map takes full height of its flex-grow space */
+    height: 100%; /* Allow map to fill the remaining space */
+    margin-bottom: 20px; /* Remove unnecessary margin */
 }
 
 .timeline-controls {
+    position: fixed; /* Fix the timeline controls at the bottom of the viewport */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* Ensure it is above other elements */
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 8px;
-    background-color: rgba(37, 37, 37, 0.9); /* Semi-transparent white */
-    border-top: 1px solid #ddd;
-    /* The following lines position it at the bottom of the map area if map has fixed height or content is relative */
-    /* position: absolute; 
-    bottom: 0;
-    left: 0;
-    right: 0; 
-    z-index: 1000; */
-    /* For now, keep it in normal flow below the map */
-    box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+    padding: 10px; /* Adjust padding for better spacing */
+    background-color: rgba(37, 37, 37, 0.9); /* Semi-transparent background */
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+    height: 60px; /* Explicit height to ensure consistent spacing */
 }
 
 .timeline-item {
@@ -754,8 +754,8 @@ body {
 }
 
 /* Custom Marker Style - ensure this class name matches what's in your JS */
-/* If your JS uses el.className = 'marker', then this should be .marker */
-/* If your JS uses el.className = 'custom-marker', then this should be .custom-marker */
+/* If your JS uses el.className = 'marker' then this should be .marker */
+/* If your JS uses el.className = 'custom-marker' then this should be .custom-marker */
 
 /* Styles for the marker if you are using el.className = 'marker' */
 .marker {
