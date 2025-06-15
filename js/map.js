@@ -709,7 +709,7 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 			goto(item['id']);
 		});
 
-		// Updated Popup HTML with Genre and Hashtag
+		// Updated Popup HTML with Year, Genre, and Hashtag
 		let genrePillHTML = '';
 		if (genre) {
 			const genreParts = genre.split(' ');
@@ -741,6 +741,7 @@ function refreshMapContent(dataToDisplay) { // Modified to accept data
 		<img src="${imageUrl}" class="popup-protruding-icon">
 		<div class="popup-text-content">
 			<h3>${title}</h3>
+			<span class="popup-year-pill">${item['Year'] || 'N/A'}</span> <!-- Year pill -->
 			${genrePillHTML}
 			<p class="popup-author-detail">${author}</p>
 			<div class="popup-description-scrollable"> <!-- Wrapper for scrollable description -->
@@ -848,10 +849,12 @@ function populateHorizontalScroller(dataToDisplay) { // Modified to accept data
 		}
 		const itemId = item['id'];
 		const author = item['Author'];
+		const age = item['Age'] || ''; // Use age if available
 		const avatarUrl = `images/avatars/${item['Avatar']}.png`;
 
 		const cardHTML = `
 		<div class="horizontal-card" data-id="${itemId}" onclick="goto(${itemId})">
+			<div class="horizontal-card-age-bubble">${age}才</div> <!-- Age bubble -->
 			<img src="${avatarUrl}" class="horizontal-card-icon-img">
 			<p class="horizontal-card-author-name">${author}</p>
 		</div>`;
