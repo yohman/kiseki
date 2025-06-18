@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>#hakuryo QR Code</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            width: 100%;
+        }
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        .qrcode {
+            max-width: 60vw;
+            max-height: 60vh;
+            width: auto;
+            height: auto;
+            display: block;
+            margin-bottom: 1em;
+        }
+        .hashtag {
+            color: #fff;
+            font-size: 6em;
+            font-family: Arial, Helvetica, sans-serif;
+            /* font-weight: bold; */
+            text-align: center;
+            line-height: 1;
+            margin: 0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
+        @media (max-width: 600px) {
+            .hashtag {
+                font-size: 3em;
+            }
+            .qrcode {
+                max-width: 90vw;
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="images/qrcode.png" alt="QR Code" class="qrcode">
+        <div class="hashtag">#hakuryo</div>
+    </div>
+</body>
+</html>

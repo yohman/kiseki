@@ -18,6 +18,7 @@ let basemapLayers = [];
 let currentFilteredData = []; // For search results
 let globalSearchTermFromUrl = null; // To store search term from URL
 let globalHashtagFromUrl = null; // To store hashtag from URL
+let globalYearFromUrl = null; // To store year from URL
 
 let currentBasemapId = 'esri-world-imagery'; // Default active basemap changed to Google Satellite ("Today")
 // Global state for initial map view
@@ -168,6 +169,10 @@ function parseUrlQueryParameters() {
 	if (queryParams.has('hashtag')) {
 		globalHashtagFromUrl = queryParams.get('hashtag');
 		console.log("Hashtag from URL:", globalHashtagFromUrl);
+	}
+	if (queryParams.has('year')) {
+		globalYearFromUrl = queryParams.get('year');
+		console.log("Year from URL:", globalYearFromUrl);
 	}
 }
 
@@ -1262,6 +1267,17 @@ function initializeBasemapData() {
 
 
 	];
+
+	// Check if globalYearFromUrl matches a basemap layer name
+	if (globalYearFromUrl) {
+		const matchingLayer = basemapLayers.find(layer => layer.name === globalYearFromUrl);
+		if (matchingLayer) {
+			currentBasemapId = matchingLayer.id; // Set the default basemap to the matching layer
+			console.log(`Default basemap changed to: ${matchingLayer.name} (${matchingLayer.id})`);
+		} else {
+			console.warn(`No basemap layer found for year: ${globalYearFromUrl}`);
+		}
+	}
 }
 // let isRotating = false;
 let rotationFrame;
