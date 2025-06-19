@@ -59,7 +59,15 @@
 <body>
     <div class="container">
         <img src="images/qrcode.png" alt="QR Code" class="qrcode">
-        <div class="hashtag">#hakuryo</div>
+        <div class="hashtag" id="hashtag">#hakuryo</div>
     </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const h = params.get('h');
+        if (h) {
+            const hashtags = h.split(',').map(tag => tag.startsWith('#') ? tag : '#' + tag).join(' ');
+            document.getElementById('hashtag').textContent = hashtags;
+        }
+    </script>
 </body>
 </html>
