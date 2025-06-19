@@ -65,7 +65,11 @@
         const params = new URLSearchParams(window.location.search);
         const h = params.get('h');
         if (h) {
-            const hashtags = h.split(',').map(tag => tag.startsWith('#') ? tag : '#' + tag).join(' ');
+            const hashtags = h.replace(/＃/g, '#') // Convert 全角＃ to 半角#
+                .toLowerCase()
+                .split(',')
+                .map(tag => tag.startsWith('#') ? tag : '#' + tag)
+                .join(' ');
             document.getElementById('hashtag').textContent = hashtags;
         }
     </script>

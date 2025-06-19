@@ -63,7 +63,7 @@
 
 
 		<div class="kiseki-header-logo">
-			<a href="#" id="logo-link" onclick="location.reload();">
+			<a href="javascript:void(0);" id="logo-link" onclick="clearUrlParams();">
 				<div class="kiseki-header-title">
 					<span class="k">キ</span>
 					<span class="s">セ</span>
@@ -100,6 +100,14 @@
 			<script src="js/map.js"></script>
 		</div> <!-- Closing content div -->
 	</div> <!-- Closing main-area div -->
+
+	<script>
+		function clearUrlParams() {
+			const baseUrl = window.location.origin + window.location.pathname;
+			history.replaceState(null, '', baseUrl); // Update the URL to remove parameters without reloading
+			location.reload(); // Reload the page to start fresh
+		}
+	</script>
 
 </body>
 </html>

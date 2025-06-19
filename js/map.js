@@ -163,15 +163,15 @@ function fetchDataAndInitialize() {
 function parseUrlQueryParameters() {
 	const queryParams = new URLSearchParams(window.location.search);
 	if (queryParams.has('s')) {
-		globalSearchTermFromUrl = queryParams.get('s');
+		globalSearchTermFromUrl = queryParams.get('s').toLowerCase();
 		console.log("Search term from URL:", globalSearchTermFromUrl);
 	}
 	if (queryParams.has('hashtag')) {
-		globalHashtagFromUrl = queryParams.get('hashtag');
+		globalHashtagFromUrl = queryParams.get('hashtag').replace(/＃/g, '#').toLowerCase(); // Normalize 全角＃ to 半角#
 		console.log("Hashtag from URL:", globalHashtagFromUrl);
 	}
 	if (queryParams.has('year')) {
-		globalYearFromUrl = queryParams.get('year');
+		globalYearFromUrl = queryParams.get('year').toLowerCase();
 		console.log("Year from URL:", globalYearFromUrl);
 	}
 }
@@ -468,7 +468,7 @@ function filterAndRefreshUI(searchTerm) {
 			const author = (item['Author'] || '').toLowerCase();
 			const title = (item['Title'] || '').toLowerCase();
 			const description = (item['Description'] || '').toLowerCase();
-			const hashtag = (item['Hashtag'] || '').toLowerCase();
+			const hashtag = (item['Hashtag'] || '').replace(/＃/g, '#').toLowerCase(); // Normalize hashtags
 			const genre = (item['Genre'] || '').toLowerCase();
 
 			return author.includes(searchTerm) ||
